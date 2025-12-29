@@ -197,9 +197,12 @@ export default merge(baseConfig, {
     },
     onBeforeSetupMiddleware() {
       console.log('Starting Main Process...');
+      // Remove NODE_OPTIONS from env to prevent Electron from rejecting --openssl-legacy-provider
+      const electronEnv = { ...process.env };
+      delete electronEnv.NODE_OPTIONS;
       spawn('npm', ['run', 'start:main'], {
         shell: true,
-        env: process.env,
+        env: electronEnv,
         stdio: 'inherit',
       })
         .on('close', (code) => process.exit(code))
