@@ -21,26 +21,45 @@ export default function PersonalizationPage() {
   const keyboardContainerRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState('');
   const [layoutName, setLayoutName] = useState<'arabic' | 'english'>('arabic');
+  const [warningMessage, setWarningMessage] = useState<string>('');
 
   const handleEnterKey = useCallback(
-    (value: string) => {
+    async (value: string) => {
       try {
-        // fetch(`${process.env.REACT_APP_API_BASE_URL}/api/print`, {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({ name: value }),
-        // });
-        if(firstText !== null && firstText !== undefined)
-          history.push(`/processing?first_text=${firstText}&second_text=${value}`);
-        else
-          history.push(`/confirmmore?first_text=${value}`);
+        // Clear previous warning
+        setWarningMessage('');
+
+        // Call the check endpoint
+        const response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/api/check`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: value }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (data === true || data === 'true') {
+          // Valid name, proceed with navigation
+          if (firstText !== null && firstText !== undefined)
+            history.push(
+              `/processing?first_text=${firstText}&second_text=${value}`
+            );
+          else history.push(`/confirmmore?first_text=${value}`);
+        } else {
+          // Invalid name, show warning
+          setWarningMessage("You can't input this name");
+        }
       } catch (error) {
         console.log(error);
+        setWarningMessage('Error validating name. Please try again.');
       }
     },
-    [history]
+    [history, firstText]
   );
 
   useEffect(() => {
@@ -88,6 +107,10 @@ export default function PersonalizationPage() {
     const { value } = e.target;
     setInput(value);
     keyboardRef.current?.setInput(value);
+    // Clear warning when user starts typing
+    if (warningMessage) {
+      setWarningMessage('');
+    }
   };
 
   return (
@@ -118,6 +141,22 @@ export default function PersonalizationPage() {
               fontSize: '20px',
             }}
           />
+          {warningMessage && (
+            <div
+              className="p-3 bg-red-100 border border-red-400 text-red-700 rounded"
+              style={{
+                position: 'absolute',
+                top: '50vh',
+                width: '70%',
+                left: '15%',
+                fontSize: '16px',
+                fontFamily: 'UnityHeadlineRegular',
+                textAlign: 'center',
+              }}
+            >
+              {warningMessage}
+            </div>
+          )}
           <button
             onClick={toggleLayout}
             className="p-2 bg-white text-black rounded shadow-md text-sm"
