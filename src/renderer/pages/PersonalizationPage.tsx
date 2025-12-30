@@ -43,7 +43,7 @@ export default function PersonalizationPage() {
 
         const data = await response.json();
 
-        if (data === true || data === 'true') {
+        if (data.valid === true) {
           // Valid name, proceed with navigation
           if (firstText !== null && firstText !== undefined)
             history.push(
